@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose')
 
 const questionSchema = new mongoose.Schema({
   quizId: { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz', required: true },
@@ -7,4 +7,5 @@ const questionSchema = new mongoose.Schema({
   correctAnswer: { type: Number, required: true }  // 0,1,2,3 index based
 });
 
-export default mongoose.model('Question', questionSchema);
+const Question = new mongoose.model('Question', questionSchema);
+module.exports = Question;
