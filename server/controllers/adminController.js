@@ -1,8 +1,9 @@
-import Admin from '../models/Admin.js';
-import bcrypt from 'bcryptjs'; // If you hash password
-import jwt from 'jsonwebtoken';
+const Admin = require('../models/Admin');
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
-export const loginAdmin = async (req, res) => {
+
+exports.loginAdmin = async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -20,8 +21,9 @@ export const loginAdmin = async (req, res) => {
       expiresIn: '7d',
     });
 
-    res.json({ token });
+    res.status(200).json({ message: "Successfully Login!!", token });
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
   }
 };
+

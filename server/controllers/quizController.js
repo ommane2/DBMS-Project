@@ -1,7 +1,6 @@
-import Quiz from '../models/Quiz.js';
-import { generateCode } from '../utils/generateCode.js';
-
-export const createQuiz = async (req, res) => {
+const Quiz = require('../models/Quiz.js');
+const { generateCode } = require('../utils/generateCode.js');
+exports.createQuiz = async (req, res) => {
   const { title, description, startTime, endTime } = req.body;
 
   try {
@@ -22,7 +21,7 @@ export const createQuiz = async (req, res) => {
   }
 };
 
-export const getAllQuizzes = async (req, res) => {
+exports.getAllQuizzes = async (req, res) => {
   try {
     const quizzes = await Quiz.find().sort({ createdAt: -1 });
     res.json(quizzes);
@@ -31,7 +30,7 @@ export const getAllQuizzes = async (req, res) => {
   }
 };
 
-export const getQuizDetails = async (req, res) => {
+exports.getQuizDetails = async (req, res) => {
   const { quizId } = req.params;
   try {
     const quiz = await Quiz.findById(quizId).populate('questions');
@@ -44,7 +43,7 @@ export const getQuizDetails = async (req, res) => {
   }
 };
 
-export const deleteQuiz = async (req, res) => {
+exports.deleteQuiz = async (req, res) => {
   const { quizId } = req.params;
   try {
     await Quiz.findByIdAndDelete(quizId);

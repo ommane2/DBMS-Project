@@ -1,8 +1,9 @@
-import Attempt from '../models/Attempt.js';
-import Quiz from '../models/Quiz.js';
-import Question from '../models/Question.js';
+const Attempt = require('../models/Attempt.js');
+const Quiz = require('../models/Quiz.js');
+const Question = require('../models/Question.js')
 
-export const startQuiz = async (req, res) => {
+
+exports.startQuiz = async (req, res) => {
   const { participantName, code } = req.body;
 
   try {
@@ -31,7 +32,7 @@ export const startQuiz = async (req, res) => {
   }
 };
 
-export const submitQuiz = async (req, res) => {
+exports.submitQuiz = async (req, res) => {
   const { quizId, participantName, answers } = req.body;
 
   try {
@@ -61,7 +62,7 @@ export const submitQuiz = async (req, res) => {
   }
 };
 
-export const getQuizResults = async (req, res) => {
+exports.getQuizResults = async (req, res) => {
   const { quizId } = req.params;
 
   try {

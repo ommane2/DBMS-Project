@@ -1,4 +1,4 @@
-export const protectAdmin = (req, res, next) => {
+exports.protectAdmin = (req, res, next) => {
     // Dummy authentication for now
     const token = req.headers.authorization;
     if (token === "admin-token") {

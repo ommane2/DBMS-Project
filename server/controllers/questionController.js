@@ -1,7 +1,8 @@
-import Question from '../models/Question.js';
-import Quiz from '../models/Quiz.js';
+const Quiz = require('../models/Quiz.js');
+const Question = require('../models/Question.js')
 
-export const addQuestion = async (req, res) => {
+
+exports.addQuestion = async (req, res) => {
   const { quizId, text, options, correctAnswer } = req.body;
 
   try {
@@ -23,7 +24,7 @@ export const addQuestion = async (req, res) => {
   }
 };
 
-export const editQuestion = async (req, res) => {
+exports.editQuestion = async (req, res) => {
   const { questionId } = req.params;
   const { text, options, correctAnswer } = req.body;
 
@@ -40,7 +41,7 @@ export const editQuestion = async (req, res) => {
   }
 };
 
-export const deleteQuestion = async (req, res) => {
+exports.deleteQuestion = async (req, res) => {
   const { questionId } = req.params;
 
   try {
@@ -59,8 +60,7 @@ export const deleteQuestion = async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 };
-
-export const getQuestionsByQuiz = async (req, res) => {
+exports.getQuestionsByQuiz = async (req, res) => {
   const { quizId } = req.params;
 
   try {
