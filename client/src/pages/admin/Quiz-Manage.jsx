@@ -109,22 +109,14 @@ export default function ManageQuiz() {
 
   const handleAddQuestion = () => {
     // Validate question
-    if (
-      !newQuestion.questionText.trim() ||
-      newQuestion.options.some((option) => !option.trim())
-    ) {
-      return;
-    }
+    // if (
+    //   !newQuestion.questionText.trim() ||
+    //   newQuestion.options.some((option) => !option.trim())
+    // ) {
+    //   return;
+    // }
     // In a real app, you would call an API to add the question
     const addQuestion = async () => {
-      // const response = await fetch(`/api/quizzes/${quizId}/questions`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     Authorization: `Bearer ${localStorage.getItem('token')}`
-      //   },
-      //   body: JSON.stringify(newQuestion)
-      // })
 
       const response = await axios.post(
         `${API}/api/question`,

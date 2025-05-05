@@ -14,6 +14,9 @@ import { Progress } from "@/components/ui/progress";
 import { AlertCircle, ArrowLeft, ArrowRight, Clock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "@/store/auth";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 // Mock quiz data
 const mockQuiz = {
@@ -71,6 +74,8 @@ export default function AttemptQuiz() {
   const navigate = useNavigate();
   const params = useParams();
   const { quizCode } = params;
+  const { isLoggedIn, API, authorizationToken } = useAuth(); // Custom hook from AuthContext
+  const [isLoading, setIsLoading] = useState(false);
 
   const [quiz, setQuiz] = useState(mockQuiz);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -103,20 +108,47 @@ export default function AttemptQuiz() {
   // }
   // fetchQuiz()
 
-  // Timer countdown\
-  useEffect(()=>{
+  const getQuizInfo = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `${API}/api/attempt/quiz-data/${quizCode}`,
+        {
+          headers: {
+            Authorization: authorizationToken,
+          },
+          withCredentials: true,
+        }
+      );
 
-  },[])
-  const timer = setInterval(() => {
-    setTimeLeft((prevTime) => {
-      if (prevTime <= 1) {
-        clearInterval(timer);
-        // handleSubmit();
-        return 0;
+      if (response.status === 200) {
+        console.log(`Quiz Response Data: `, response.data);
+        setQuiz(response.data);
       }
-      return prevTime - 1;
-    });
-  }, 1000);
+    } catch (error) {
+      console.log(`Error While Getting Quiz: `, error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getQuizInfo();
+  }, [API, quizCode]);
+
+  // Timer countdown\
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prevTime) => {
+        if (prevTime <= 1) {
+          clearInterval(timer);
+          // handleSubmit();
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+  }, []);
 
   // return () => clearInterval(timer)
   // , [quizCode, router])
@@ -149,34 +181,38 @@ export default function AttemptQuiz() {
       if (!isConfirmed) return;
     }
 
+    const transformedAnswers = Object.entries(answers).map(
+      ([questionId, selectedOption]) => ({
+        questionId,
+        selectedOption,
+      })
+    );
+
     setIsSubmitting(true);
-    setError("");
+    // setError("");
 
     try {
-      // In a real app, you would call an API to submit answers
-      // const response = await fetch(`/api/quiz/${quizCode}/submit`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     participantId: localStorage.getItem('participantId'),
-      //     answers
-      //   })
-      // })
-
-      // if (response.ok) {
-      //   router.push(`/user/quiz/${quizCode}/submitted`)
-      // } else {
-      //   const data = await response.json()
-      //   setError(data.message || 'Failed to submit quiz')
-      // }
-
-      // For demo purposes, we'll simulate a successful submission
-      setTimeout(() => {
+      console.log("Submitting answers: ", answers);
+      const response = await axios.post(
+        `${API}/api/attempt/submit`,
+        {
+          quizId: quizCode,
+          participantName: localStorage.getItem("participantName"),
+          answers:transformedAnswers,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (response.status === 201) {
         localStorage.setItem("quizAnswers", JSON.stringify(answers));
         navigate(`/user/quiz/${quizCode}/submitted`);
-      }, 1000);
-    } catch (err) {
-      setError("An error occurred. Please try again.");
+        toast.success(response.data.message);
+      }
+    } catch (error) {
+      toast.error(error.response.data.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -190,8 +226,12 @@ export default function AttemptQuiz() {
       .padStart(2, "0")}`;
   };
 
-  const currentQuestion = quiz.questions[currentQuestionIndex];
+  const currentQuestion = quiz?.questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
+
+  if (isLoading) {
+    return <h1>Loading.......</h1>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
