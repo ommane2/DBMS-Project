@@ -19,7 +19,7 @@ exports.createQuiz = async (req, res) => {
     });
 
     await newQuiz.save();
-    res.status(201).json({message:"Quiz Created Successfully!!",newQuiz});
+    res.status(201).json({ message: "Quiz Created Successfully!!", newQuiz });
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
   }
@@ -73,10 +73,24 @@ exports.getQuizDetails = async (req, res) => {
 
 exports.deleteQuiz = async (req, res) => {
   const { quizId } = req.params;
+
   try {
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+    // Delete all related questions
+    await Question.deleteMany({ quizId });
+
+    // Delete all related attempts
+    await Attempt.deleteMany({ quizId });
+
+    // Delete the quiz
     await Quiz.findByIdAndDelete(quizId);
-    res.json({ message: "Quiz deleted successfully" });
+
+    res.status(200).json({ message: "Quiz and related data deleted successfully" });
   } catch (error) {
+    console.error("Error deleting quiz:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };

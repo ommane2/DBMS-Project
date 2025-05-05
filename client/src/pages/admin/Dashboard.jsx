@@ -20,6 +20,7 @@ import { formatDate } from "@/lib/utils"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/store/auth"
 import axios from "axios"
+import { toast } from "react-toastify"
 
 
 
@@ -94,18 +95,19 @@ const navigate = useNavigate();
     getAllQuizes();
   },[API])
 
-  const confirmDeleteQuiz = () => {
-    // In a real app, you would call an API to delete the quiz
-    // const deleteQuiz = async () => {
-    //   await fetch(`/api/quizzes/${deleteQuizId}`, {
-    //     method: 'DELETE',
-    //     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    //   })
-    // }
+  const confirmDeleteQuiz = async() => {
+    const response = await axios.delete(`${API}/api/quiz/${deleteQuizId}`,{
+      headers:{
+        Authorization:authorizationToken,
+      },withCredentials:true,
+    })
 
-    // For demo, just filter out the deleted quiz
-    setQuizzes(quizzes.filter((quiz) => quiz.id !== deleteQuizId))
-    setIsDeleteDialogOpen(false)
+    if(response.status===200){
+      setIsDeleteDialogOpen(false)
+      toast.success(response.data.message);
+      getAllQuizes();
+    }
+    // setQuizzes(quizzes.filter((quiz) => quiz.id !== deleteQuizId))
   }
 
   const getQuizStatus = (startTime, endTime) => {

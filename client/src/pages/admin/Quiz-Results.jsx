@@ -18,6 +18,8 @@ import {
 import { ArrowLeft, Download } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { useAuth } from "@/store/auth";
 
 // Mock results data
 const mockResults = {
@@ -58,31 +60,39 @@ const mockResults = {
 export default function QuizResults() {
   const navigate = useNavigate();
   const params = useParams();
-  const { quizId } = params;
+  const { isLoggedIn, isAdmin, API, authorizationToken } = useAuth(); // Custom hook from AuthContext
 
-  const [results, setResults] = useState(mockResults);
+  const { quizId } = params;
+  const [isLoading, setIsLoading] = useState(true);
+  const [results, setResults] = useState({ participants: [] });
   const [sortConfig, setSortConfig] = useState({
     key: "score",
     direction: "desc",
   });
 
-  // useEffect(() => {
-  //   // Check if user is logged in
-  //   const token = localStorage.getItem("token");
-  //   if (!token) {
-  //     navigate("/admin/login");
-  //   }
+  const getResults = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`${API}/api/attempt/results/${quizId}`, {
+        headers: {
+          Authorization: authorizationToken,
+        },
+        withCredentials: true,
+      });
+      if (response.status === 200) {
+        console.log(response.data);
+        setResults(response.data);
+      }
+    } catch (error) {
+      console.log(`Error While getting Results: `, error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  //   // In a real app, you would fetch results from API here
-  //   // const fetchResults = async () => {
-  //   //   const response = await fetch(`/api/quizzes/${quizId}/results`, {
-  //   //     headers: { Authorization: `Bearer ${token}` }
-  //   //   })
-  //   //   const data = await response.json()
-  //   //   setResults(data)
-  //   // }
-  //   // fetchResults()
-  // }, [quizId, navigate]);
+  useEffect(() => {
+    getResults();
+  }, [API,quizId]);
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -92,12 +102,12 @@ export default function QuizResults() {
     setSortConfig({ key, direction });
   };
 
-  const sortedParticipants = [...results.participants].sort((a, b) => {
-    if (a[sortConfig.key] < b[sortConfig.key]) {
-      return sortConfig.direction === "asc" ? -1 : 1;
+  const sortedParticipants = [...results?.participants].sort((a, b) => {
+    if (a[sortConfig.key] < b[sortConfig?.key]) {
+      return sortConfig?.direction === "asc" ? -1 : 1;
     }
-    if (a[sortConfig.key] > b[sortConfig.key]) {
-      return sortConfig.direction === "asc" ? 1 : -1;
+    if (a[sortConfig.key] > b[sortConfig?.key]) {
+      return sortConfig?.direction === "asc" ? 1 : -1;
     }
     return 0;
   });
@@ -139,10 +149,14 @@ export default function QuizResults() {
     document.body.removeChild(link);
   };
 
+  if (isLoading) {
+    return <h1>Loading......</h1>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <Link
+       <Link
           to="/admin/dashboard"
           className="mb-6 inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
         >
