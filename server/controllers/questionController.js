@@ -1,43 +1,46 @@
-const Quiz = require('../models/Quiz.js');
-const Question = require('../models/Question.js')
-
+const Quiz = require("../models/Quiz.js");
+const Question = require("../models/Question.js");
 
 exports.addQuestion = async (req, res) => {
-  const { quizId, text, options, correctAnswer } = req.body;
+  const { quizId, text, options, correctOption } = req.body;
 
   try {
     const newQuestion = new Question({
       quizId,
       text,
       options,
-      correctAnswer,
+      correctOption,
     });
 
     await newQuestion.save();
 
     // Push question to quiz
-    await Quiz.findByIdAndUpdate(quizId, { $push: { questions: newQuestion._id } });
+    await Quiz.findByIdAndUpdate(quizId, {
+      $push: { questions: newQuestion._id },
+    });
 
-    res.status(201).json(newQuestion);
+    res.status(201).json({ message: "New Question Added!!!", newQuestion });
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
 exports.editQuestion = async (req, res) => {
   const { questionId } = req.params;
-  const { text, options, correctAnswer } = req.body;
+  const { text, options, correctOption } = req.body;
 
   try {
     const updatedQuestion = await Question.findByIdAndUpdate(
       questionId,
-      { text, options, correctAnswer },
+      { text, options, correctOption },
       { new: true }
     );
 
-    res.json(updatedQuestion);
+    res
+      .status(200)
+      .json({ message: "Question Updated Successfully!!", updatedQuestion });
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -47,17 +50,19 @@ exports.deleteQuestion = async (req, res) => {
   try {
     const question = await Question.findById(questionId);
     if (!question) {
-      return res.status(404).json({ message: 'Question not found' });
+      return res.status(404).json({ message: "Question not found" });
     }
 
     // Remove from Quiz's question list
-    await Quiz.findByIdAndUpdate(question.quizId, { $pull: { questions: questionId } });
+    await Quiz.findByIdAndUpdate(question.quizId, {
+      $pull: { questions: questionId },
+    });
 
     await question.deleteOne();
 
-    res.json({ message: 'Question deleted' });
+    res.status(200).json({ message: "Question deleted" });
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 exports.getQuestionsByQuiz = async (req, res) => {
@@ -67,6 +72,6 @@ exports.getQuestionsByQuiz = async (req, res) => {
     const questions = await Question.find({ quizId });
     res.json(questions);
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: "Server Error" });
   }
 };

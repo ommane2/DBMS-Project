@@ -18,11 +18,13 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, LogOut, MoreVertical, Plus, Settings, Trash, Users } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { Link, useNavigate } from "react-router-dom"
+import { useAuth } from "@/store/auth"
+import axios from "axios"
 
 
 
 // Mock data for quizzes
-const mockQuizzes = [
+const mockQuizzesDummy = [
   {
     id: "1",
     title: "JavaScript Fundamentals",
@@ -58,37 +60,39 @@ const mockQuizzes = [
 export default function AdminDashboard() {
 //   const router = useRouter()
 const navigate = useNavigate();
-  const [quizzes, setQuizzes] = useState(mockQuizzes)
+  const { isLoggedIn, API, LogoutUser,authorizationToken} = useAuth(); // Custom hook from AuthContext
+  const [isLoading, setIsLoading] = useState(true);
+  const [quizzes, setQuizzes] = useState([])
   const [deleteQuizId, setDeleteQuizId] = useState(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
-  // useEffect(() => {
-  //   // Check if user is logged in
-  //   const token = localStorage.getItem("token")
-  //   if (!token) {
-  //       navigate("/admin/login")
-  //   }
+  const getAllQuizes = async()=>{
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`${API}/api/quiz`,{
+        headers:{
+          Authorization:authorizationToken,
+        },withCredentials:true,
+      })
 
-  //   // In a real app, you would fetch quizzes from API here
-  //   // const fetchQuizzes = async () => {
-  //   //   const response = await fetch('/api/quizzes', {
-  //   //     headers: { Authorization: `Bearer ${token}` }
-  //   //   })
-  //   //   const data = await response.json()
-  //   //   setQuizzes(data)
-  //   // }
-  //   // fetchQuizzes()
-  // }, [navigate])
-
-  const handleLogout = () => {
-    localStorage.removeItem("token")
-    navigate("/admin/login")
+      if(response.status===200){
+        setQuizzes(response.data)
+      }
+    } catch (error) {
+      
+    }finally{
+      setIsLoading(false)
+    }
   }
 
   const handleDeleteQuiz = (quizId) => {
     setDeleteQuizId(quizId)
     setIsDeleteDialogOpen(true)
   }
+
+  useEffect(()=>{
+    getAllQuizes();
+  },[API])
 
   const confirmDeleteQuiz = () => {
     // In a real app, you would call an API to delete the quiz
@@ -111,13 +115,17 @@ const navigate = useNavigate();
     return "active"
   }
 
+  if(isLoading){
+    return <h1>Loading......</h1>
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
       <header className="sticky top-0 z-10 border-b bg-white shadow-sm">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <h1 className="text-xl font-bold text-gray-900">Quiz Admin</h1>
-          <Button variant="ghost" onClick={handleLogout}>
+          <Button variant="ghost" onClick={LogoutUser}>
             <LogOut className="mr-2 h-4 w-4" />
             Logout
           </Button>

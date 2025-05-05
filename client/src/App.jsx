@@ -27,7 +27,6 @@ const App = () => {
 
 
         {/* User Routes */}
-
         <Route exact path="/user/join" element={<JoinQuiz />} />
         <Route exact path="/user/quiz/:quizCode/attempt" element={<AttemptQuiz />} />
         <Route exact path="/user/quiz/:quizCode/submitted" element={<QuizSubmitted />} />

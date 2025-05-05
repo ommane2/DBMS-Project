@@ -4,11 +4,13 @@ import "./index.css";
 import AppWrapper from "./App.jsx";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
+import { AuthProvider } from './store/auth.jsx'; // auth.jsx
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <AppWrapper />
-    <ToastContainer
+  <AuthProvider>
+    <StrictMode>
+      <AppWrapper />
+      <ToastContainer
         position="top-right"
         autoClose={1000}
         hideProgressBar={false}
@@ -21,5 +23,6 @@ createRoot(document.getElementById("root")).render(
         theme="colored"
         bodyClassName="toastBody"
       />
-  </StrictMode>
+    </StrictMode>
+  </AuthProvider>
 );

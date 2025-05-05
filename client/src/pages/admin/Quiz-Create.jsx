@@ -1,15 +1,26 @@
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft } from "lucide-react"
-import { Link, useNavigate } from "react-router-dom"
-
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/store/auth";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export default function CreateQuiz() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const { isLoggedIn, isAdmin, API, authorizationToken } = useAuth(); // Custom hook from AuthContext
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -17,61 +28,49 @@ export default function CreateQuiz() {
     startTime: "",
     endDate: "",
     endTime: "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
-
-  // useEffect(() => {
-  //   // Check if user is logged in
-  //   const token = localStorage.getItem("token")
-  //   if (!token) {
-  //       navigate("/admin/login")
-  //   }
-  // }, [router])
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
     try {
       // Combine date and time
-      const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`)
-      const endDateTime = new Date(`${formData.endDate}T${formData.endTime}`)
+      const startDateTime = new Date(
+        `${formData.startDate}T${formData.startTime}`
+      );
+      const endDateTime = new Date(`${formData.endDate}T${formData.endTime}`);
 
-      // In a real app, you would call an API to create the quiz
-      // const response = await fetch('/api/quizzes', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     Authorization: `Bearer ${localStorage.getItem('token')}`
-      //   },
-      //   body: JSON.stringify({
-      //     title: formData.title,
-      //     description: formData.description,
-      //     startTime: startDateTime.toISOString(),
-      //     endTime: endDateTime.toISOString()
-      //   })
-      // })
-      // const data = await response.json()
+      const response = await axios.post(`${API}/api/quiz`, {
+        title: formData.title,
+        description: formData.description,
+        startTime: startDateTime,
+        endTime: endDateTime,
+      },{
+        headers:{
+          Authorization:authorizationToken,
+        },withCredentials:true,
+      });
 
-      // For demo purposes, we'll simulate a successful creation
-      setTimeout(() => {
-        // Redirect to manage quiz page with a mock ID
-        navigate("/admin/quiz/new-quiz-id/manage")
-      }, 1000)
+      if (response.status === 200 || response.status === 201) {
+        toast.success(response.data.message);
+        navigate(`/admin/quiz/${response.data.newQuiz._id}/manage`);
+      }
     } catch (error) {
-      console.error("Error creating quiz:", error)
+      toast.error(error.response.data.message);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // Set min date to today
-  const today = new Date().toISOString().split("T")[0]
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -87,10 +86,16 @@ export default function CreateQuiz() {
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Create New Quiz</CardTitle>
-            <CardDescription>Set up the basic information for your new quiz</CardDescription>
+            <CardDescription>
+              Set up the basic information for your new quiz
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <form id="create-quiz-form" onSubmit={handleSubmit} className="space-y-6">
+            <form
+              id="create-quiz-form"
+              onSubmit={handleSubmit}
+              className="space-y-6"
+            >
               <div className="space-y-2">
                 <Label htmlFor="title">Quiz Title</Label>
                 <Input
@@ -185,5 +190,5 @@ export default function CreateQuiz() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

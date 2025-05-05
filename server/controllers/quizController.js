@@ -1,5 +1,9 @@
-const Quiz = require('../models/Quiz.js');
-const { generateCode } = require('../utils/generateCode.js');
+const Attempt = require("../models/Attempt.js");
+const Quiz = require("../models/Quiz.js");
+const Question = require("../models/Question.js");
+
+const { generateCode } = require("../utils/generateCode.js");
+
 exports.createQuiz = async (req, res) => {
   const { title, description, startTime, endTime } = req.body;
 
@@ -15,31 +19,55 @@ exports.createQuiz = async (req, res) => {
     });
 
     await newQuiz.save();
-    res.status(201).json(newQuiz);
+    res.status(201).json({message:"Quiz Created Successfully!!",newQuiz});
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
 exports.getAllQuizzes = async (req, res) => {
   try {
-    const quizzes = await Quiz.find().sort({ createdAt: -1 });
-    res.json(quizzes);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    // Fetch all quizzes
+    const quizzes = await Quiz.find({}).lean();
+
+    const enrichedQuizzes = await Promise.all(
+      quizzes.map(async (quiz) => {
+        const questionCount = await Question.countDocuments({
+          quizId: quiz._id,
+        });
+        const participantCount = await Attempt.countDocuments({
+          quizId: quiz._id,
+        });
+
+        return {
+          id: quiz._id.toString(),
+          title: quiz.title,
+          description: quiz.description,
+          code: quiz.code,
+          startTime: quiz.startTime,
+          endTime: quiz.endTime,
+          questions: questionCount,
+          participants: participantCount,
+        };
+      })
+    );
+
+    res.status(200).json(enrichedQuizzes);
+  } catch (err) {
+    console.error("Error fetching quizzes:", err);
+    res.status(500).json({ message: "Server Error" });
   }
 };
-
 exports.getQuizDetails = async (req, res) => {
   const { quizId } = req.params;
   try {
-    const quiz = await Quiz.findById(quizId).populate('questions');
+    const quiz = await Quiz.findById(quizId).populate("questions");
     if (!quiz) {
-      return res.status(404).json({ message: 'Quiz not found' });
+      return res.status(404).json({ message: "Quiz not found" });
     }
     res.json(quiz);
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -47,8 +75,8 @@ exports.deleteQuiz = async (req, res) => {
   const { quizId } = req.params;
   try {
     await Quiz.findByIdAndDelete(quizId);
-    res.json({ message: 'Quiz deleted successfully' });
+    res.json({ message: "Quiz deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: "Server Error" });
   }
 };

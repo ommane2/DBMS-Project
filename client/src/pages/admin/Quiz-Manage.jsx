@@ -33,6 +33,9 @@ import {
 import { ArrowLeft, Clock, Edit, Plus, Trash } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { useAuth } from "@/store/auth";
+import { toast } from "react-toastify";
 
 // Mock quiz data
 const mockQuiz = {
@@ -67,35 +70,42 @@ export default function ManageQuiz() {
   const navigate = useNavigate();
   const params = useParams();
   const { quizId } = params;
-
-  const [quiz, setQuiz] = useState(mockQuiz);
+  const { isLoggedIn, isAdmin, API, authorizationToken } = useAuth(); // Custom hook from AuthContext
+  const [quiz, setQuiz] = useState(null);
   const [isAddQuestionDialogOpen, setIsAddQuestionDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteQuestionId, setDeleteQuestionId] = useState(null);
   const [newQuestion, setNewQuestion] = useState({
-    questionText: "",
+    text: "",
     options: ["", "", "", ""],
     correctOption: 0,
   });
   const [editingQuestion, setEditingQuestion] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const getQuizInfo = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`${API}/api/quiz/${quizId}`, {
+        headers: {
+          Authorization: authorizationToken,
+        },
+        withCredentials: true,
+      });
 
-  // useEffect(() => {
-  //   // Check if user is logged in
-  //   const token = localStorage.getItem("token");
-  //   if (!token) {
-  //     navigate("/admin/login");
-  //   }
+      if (response.status === 200) {
+        console.log(`Quiz Response Data: `, response.data);
+        setQuiz(response.data);
+      }
+    } catch (error) {
+      console.log(`Error While Getting Quiz: `, error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  //   // In a real app, you would fetch quiz data from API here
-  //   // const fetchQuiz = async () => {
-  //   //   const response = await fetch(`/api/quizzes/${quizId}`, {
-  //   //     headers: { Authorization: `Bearer ${token}` }
-  //   //   })
-  //   //   const data = await response.json()
-  //   //   setQuiz(data)
-  //   // }
-  //   // fetchQuiz()
-  // }, [quizId, navigate]);
+  useEffect(() => {
+    getQuizInfo();
+  }, [API, quizId]);
 
   const handleAddQuestion = () => {
     // Validate question
@@ -105,23 +115,38 @@ export default function ManageQuiz() {
     ) {
       return;
     }
-
     // In a real app, you would call an API to add the question
-    // const addQuestion = async () => {
-    //   const response = await fetch(`/api/quizzes/${quizId}/questions`, {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       Authorization: `Bearer ${localStorage.getItem('token')}`
-    //     },
-    //     body: JSON.stringify(newQuestion)
-    //   })
-    //   const data = await response.json()
-    //   setQuiz(prev => ({
-    //     ...prev,
-    //     questions: [...prev.questions, data]
-    //   }))
-    // }
+    const addQuestion = async () => {
+      // const response = await fetch(`/api/quizzes/${quizId}/questions`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     Authorization: `Bearer ${localStorage.getItem('token')}`
+      //   },
+      //   body: JSON.stringify(newQuestion)
+      // })
+
+      const response = await axios.post(
+        `${API}/api/question`,
+        {
+          quizId: quizId,
+          text: newQuestion.text,
+          options: newQuestion.options,
+          correctOption: newQuestion.correctOption,
+        },
+        {
+          headers: {
+            Authorization: authorizationToken,
+          },
+          withCredentials: true,
+        }
+      );
+      if (response.status === 201) {
+        getQuizInfo();
+        toast.success(response.data.message);
+      }
+    };
+    addQuestion();
 
     // For demo, just add to local state
     const newQuestionWithId = {
@@ -136,7 +161,7 @@ export default function ManageQuiz() {
 
     // Reset form
     setNewQuestion({
-      questionText: "",
+      text: "",
       options: ["", "", "", ""],
       correctOption: 0,
     });
@@ -147,7 +172,7 @@ export default function ManageQuiz() {
   const handleEditQuestion = (question) => {
     setEditingQuestion(question);
     setNewQuestion({
-      questionText: question.questionText,
+      text: question.text,
       options: [...question.options],
       correctOption: question.correctOption,
     });
@@ -156,16 +181,32 @@ export default function ManageQuiz() {
 
   const handleUpdateQuestion = () => {
     // In a real app, you would call an API to update the question
-    // const updateQuestion = async () => {
-    //   await fetch(`/api/quizzes/${quizId}/questions/${editingQuestion.id}`, {
-    //     method: 'PUT',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       Authorization: `Bearer ${localStorage.getItem('token')}`
-    //     },
-    //     body: JSON.stringify(newQuestion)
-    //   })
-    // }
+    const updateQuestion = async () => {
+      // await fetch(`/api/quizzes/${quizId}/questions/${editingQuestion.id}`, {
+      //   method: 'PUT',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     Authorization: `Bearer ${localStorage.getItem('token')}`
+      //   },
+      //   body: JSON.stringify(newQuestion)
+      // })
+
+      const response  =await axios.put(`${API}/api/question/${editingQuestion._id}`,{
+        text:newQuestion.text,
+        options:newQuestion.options,
+        correctOption:newQuestion.correctOption,
+      },{
+        headers:{
+          Authorization:authorizationToken,
+        },withCredentials:true,
+      })
+      if(response.status===200){
+        toast.success(response.data.message);
+        getQuizInfo();
+      }
+    };
+
+    updateQuestion();
 
     // For demo, just update local state
     setQuiz((prev) => ({
@@ -177,7 +218,7 @@ export default function ManageQuiz() {
 
     // Reset form
     setNewQuestion({
-      questionText: "",
+      text: "",
       options: ["", "", "", ""],
       correctOption: 0,
     });
@@ -190,14 +231,17 @@ export default function ManageQuiz() {
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDeleteQuestion = () => {
-    // In a real app, you would call an API to delete the question
-    // const deleteQuestion = async () => {
-    //   await fetch(`/api/quizzes/${quizId}/questions/${deleteQuestionId}`, {
-    //     method: 'DELETE',
-    //     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    //   })
-    // }
+  const confirmDeleteQuestion = async () => {
+    const response = await axios.delete(`${API}/api/question/${deleteQuestionId}`, {
+      headers: {
+        Authorization: authorizationToken,
+      },
+      withCredentials: true,
+    });
+    if (response.status === 200) {
+      toast.success(response.data.message);
+      getQuizInfo();
+    }
 
     // For demo, just filter out the deleted question
     setQuiz((prev) => ({
@@ -215,6 +259,10 @@ export default function ManageQuiz() {
       return { ...prev, options: updatedOptions };
     });
   };
+
+  if (isLoading) {
+    return <h1>Loading......</h1>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -297,15 +345,15 @@ export default function ManageQuiz() {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="questionText">Question</Label>
+                  <Label htmlFor="text">Question</Label>
                   <Textarea
-                    id="questionText"
+                    id="text"
                     placeholder="Enter your question here"
-                    value={newQuestion.questionText}
+                    value={newQuestion.text}
                     onChange={(e) =>
                       setNewQuestion((prev) => ({
                         ...prev,
-                        questionText: e.target.value,
+                        text: e.target.value,
                       }))
                     }
                     rows={2}
@@ -362,7 +410,7 @@ export default function ManageQuiz() {
                     setIsAddQuestionDialogOpen(false);
                     setEditingQuestion(null);
                     setNewQuestion({
-                      questionText: "",
+                      text: "",
                       options: ["", "", "", ""],
                       correctOption: 0,
                     });
@@ -400,7 +448,7 @@ export default function ManageQuiz() {
         ) : (
           <div className="space-y-4">
             {quiz.questions.map((question, index) => (
-              <Card key={question.id} className="overflow-hidden">
+              <Card key={question._id} className="overflow-hidden">
                 <CardContent className="p-6">
                   <div className="mb-4 flex items-start justify-between">
                     <div className="flex-1">
@@ -408,7 +456,7 @@ export default function ManageQuiz() {
                         Question {index + 1}
                       </div>
                       <div className="text-lg font-medium">
-                        {question.questionText}
+                        {question.text}
                       </div>
                     </div>
                     <div className="flex space-x-2">
@@ -422,7 +470,7 @@ export default function ManageQuiz() {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => handleDeleteQuestion(question.id)}
+                        onClick={() => handleDeleteQuestion(question._id)}
                       >
                         <Trash className="h-4 w-4" />
                       </Button>

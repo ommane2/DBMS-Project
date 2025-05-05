@@ -9,11 +9,14 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { useAuth } from "@/store/auth"
+import { toast } from "react-toastify"
+import axios from "axios"
 
 
 export default function AdminLogin() {
-//   const router = useRouter()
-const navigate = useNavigate();
+  const { isLoggedIn, API, storeTokenInCookies } = useAuth(); // Custom hook from AuthContext
+  const navigate = useNavigate();
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -22,40 +25,34 @@ const navigate = useNavigate();
   const handleLogin = async (e) => {
     e.preventDefault()
     setIsLoading(true)
-    setError("")
+    // setError("")
 
     try {
-      // This would be a real API call in production
-      // const response = await fetch('/api/admin/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, password }),
-      // })
+      const response = await axios.post(`${API}/api/admin/login`, {
+        email: email,
+        password: password,
+      }, {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
 
-      // For demo purposes, we'll simulate a successful login
-      // if (response.ok) {
-      //   const data = await response.json()
-      //   // Store token in localStorage or cookies
-      //   localStorage.setItem('token', data.token)
-      //   navigate('/admin/dashboard')
-      // } else {
-      //   const data = await response.json()
-      //   setError(data.message || 'Login failed')
-      // }
-
-      // Demo login logic
-      if (email === "admin@example.com" && password === "password") {
-        // Simulate storing token
-        localStorage.setItem("token", "demo-token")
-        navigate("/admin/dashboard")
-      } else {
-        setError("Invalid email or password")
+      if (response.status === 200){
+        const res_data = response.data;
+        // console.log(res_data)
+        toast.success(res_data.message);
+        storeTokenInCookies(res_data.token);
+        navigate("/admin/dashboard");
       }
-    } catch (err) {
-      setError("An error occurred. Please try again.")
+    } catch (error) {
+      toast.error(error.response.data.message)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if(isLoggedIn){
+    navigate("/admin/dashboard")
   }
 
   return (
