@@ -226,7 +226,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## 📞 Contact
 
-> **Author:** Your Name
+> **Author:** Om Mane
 > **GitHub:** [@ommane2](https://github.com/ommane2)
 > **Email:** [maneom543@gmail.com](mailto:maneom543@gmail.com)
 
