@@ -123,7 +123,7 @@ exports.getQuizDataByCode = async (req, res) => {
 
     // Fetch related questions
     const questions = await Question.find({ quizId: quiz._id }).select(
-      "questionText options"
+      "text options"
     );
 
     // Format response
@@ -135,7 +135,7 @@ exports.getQuizDataByCode = async (req, res) => {
       timeLimit: quiz.timeLimit || 600, // fallback to 10 mins if not set
       questions: questions.map((q) => ({
         id: q._id,
-        questionText: q.questionText,
+        questionText: q.text,
         options: q.options,
       })),
     };

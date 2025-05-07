@@ -39,7 +39,7 @@ export default function AdminLogin() {
 
       if (response.status === 200){
         const res_data = response.data;
-        // console.log(res_data)
+        console.log(res_data)
         toast.success(res_data.message);
         storeTokenInCookies(res_data.token);
         navigate("/admin/dashboard");

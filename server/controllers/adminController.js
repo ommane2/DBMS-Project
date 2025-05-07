@@ -27,6 +27,10 @@ exports.loginAdmin = async (req, res) => {
 
     const token = await user.generateToken();
 
+    if(token===undefined){
+      return res.status(400).json({ message: "Invalid Token." });
+    }
+
     return res
       .status(200)
       .json({
